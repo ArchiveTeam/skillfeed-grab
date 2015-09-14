@@ -32,7 +32,7 @@ wget.callbacks.download_child_p = function(urlpos, parent, depth, start_url_pars
   end
   
   if (downloaded[url] ~= true or addedtolist[url] ~= true) then
-    if (downloaded[url] ~= true and addedtolist[url] ~= true) and ((string.match(url, "[^0-9]"..item_value) and not string.match(url, "[^0-9]"..item_value.."[0-9]")) or string.match(url, "^https?://fast%.wistia%.com/") or string.match(url, "^https?://distillery%.wistia%.com/") or string.match(url, "^https?://embed%-ssl%.wistia%.com/") or html == 0) then
+    if (downloaded[url] ~= true and addedtolist[url] ~= true) and ((string.match(url, "/courses/"..item_value) and not string.match(url, "/courses/"..item_value.."[0-9]")) or string.match(url, "^https?://fast%.wistia%.com/") or string.match(url, "^https?://distillery%.wistia%.com/") or string.match(url, "^https?://embed%-ssl%.wistia%.com/") or html == 0) then
       addedtolist[url] = true
       return true
     else
@@ -47,7 +47,7 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
   local html = nil
   
   local function check(url)
-    if (downloaded[url] ~= true and addedtolist[url] ~= true) and ((string.match(url, "[^0-9]"..item_value) and not string.match(url, "[^0-9]"..item_value.."[0-9]")) or string.match(url, "^https?://fast%.wistia%.com/") or string.match(url, "^https?://distillery%.wistia%.com/") or string.match(url, "^https?://pipedream%.wistia%.com/") or string.match(url, "^https?://embed%-ssl%.wistia%.com/") or string.match(url, "cloudfront%.net") or string.match(url, "optimizely%.com") or string.match(url, "amazonaws%.com")) then
+    if (downloaded[url] ~= true and addedtolist[url] ~= true) and ((string.match(url, "/courses/"..item_value) and not string.match(url, "/courses/"..item_value.."[0-9]")) or string.match(url, "^https?://fast%.wistia%.com/") or string.match(url, "^https?://distillery%.wistia%.com/") or string.match(url, "^https?://pipedream%.wistia%.com/") or string.match(url, "^https?://embed%-ssl%.wistia%.com/") or string.match(url, "cloudfront%.net") or string.match(url, "optimizely%.com") or string.match(url, "amazonaws%.com")) then
       if string.match(url, "&amp;") then
         table.insert(urls, { url=string.gsub(url, "&amp;", "&") })
         addedtolist[url] = true
@@ -63,13 +63,13 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
     if string.match(newurl, "^https?://") then
       check(newurl)
     elseif string.match(newurl, "^//") then
-      check(string.gsub(newurl, "//", "http://"))
+      check("http:"..newurl)
     elseif string.match(newurl, "^/") then
       check(string.match(url, "^(https?://[^/]+)")..newurl)
     end
   end
   
-  if (string.match(url, "[^0-9]"..item_value) and not string.match(url, "[^0-9]"..item_value.."[0-9]")) or string.match(url, "^https?://fast%.wistia%.com/") then
+  if (string.match(url, "/courses/"..item_value) and not string.match(url, "/courses/"..item_value.."[0-9]")) or string.match(url, "^https?://fast%.wistia%.com/") then
     html = read_file(file)
     for newurl in string.gmatch(html, '"([^"]+)"') do
       checknewurl(newurl, url)
@@ -152,4 +152,3 @@ wget.callbacks.httploop_result = function(url, err, http_stat)
 
   return wget.actions.NOTHING
 end
-

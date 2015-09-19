@@ -8,6 +8,7 @@ local item_value = os.getenv('item_value')
 
 local downloaded = {}
 local addedtolist = {}
+local googleurls = {}
 
 downloaded["https://fast.wistia.com/btnfr'.indexOf(c)>-1)d+=l[c],r++;else if(c=="] = true
 downloaded["https://fast.wistia.com/g,"] = true
@@ -31,8 +32,8 @@ wget.callbacks.download_child_p = function(urlpos, parent, depth, start_url_pars
     return false
   end
   
-  if (downloaded[url] ~= true or addedtolist[url] ~= true) then
-    if (downloaded[url] ~= true and addedtolist[url] ~= true) and ((string.match(url, "/courses/"..item_value) and not string.match(url, "/courses/"..item_value.."[0-9]")) or string.match(url, "^https?://fast%.wistia%.com/") or string.match(url, "^https?://distillery%.wistia%.com/") or string.match(url, "^https?://embed%-ssl%.wistia%.com/") or html == 0) then
+  if (downloaded[url] ~= true or addedtolist[url] ~= true) and not string.match(string.match(url, "https?://([^/]+)"), "google") then
+    if (downloaded[url] ~= true and addedtolist[url] ~= true) and ((string.match(url, "/courses/"..item_value) and not (string.match(url, "/courses/"..item_value.."[0-9]"))) or string.match(url, "^https?://fast%.wistia%.com/") or string.match(url, "^https?://distillery%.wistia%.com/") or string.match(url, "^https?://embed%-ssl%.wistia%.com/") or html == 0) then
       addedtolist[url] = true
       return true
     else
@@ -46,8 +47,8 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
   local urls = {}
   local html = nil
   
-  local function check(url)
-    if (downloaded[url] ~= true and addedtolist[url] ~= true) and ((string.match(url, "/courses/"..item_value) and not string.match(url, "/courses/"..item_value.."[0-9]")) or string.match(url, "^https?://fast%.wistia%.com/") or string.match(url, "^https?://distillery%.wistia%.com/") or string.match(url, "^https?://pipedream%.wistia%.com/") or string.match(url, "^https?://embed%-ssl%.wistia%.com/") or string.match(url, "cloudfront%.net") or string.match(url, "optimizely%.com") or string.match(url, "amazonaws%.com")) then
+  local function check(url, origurl)
+    if (downloaded[url] ~= true and addedtolist[url] ~= true) and ((string.match(url, "/courses/"..item_value) and not (string.match(url, "/courses/"..item_value.."[0-9]") or string.match(string.match(origurl, "https?://([^/]+)"), "google"))) or string.match(url, "^https?://fast%.wistia%.com/") or string.match(url, "^https?://distillery%.wistia%.com/") or string.match(url, "^https?://pipedream%.wistia%.com/") or (string.match(string.match(url, "https?://([^/]+)"), "google") and not string.match(string.match(origurl, "https?://([^/]+)"), "google")) or string.match(url, "^https?://embed%-ssl%.wistia%.com/") or string.match(url, "cloudfront%.net") or string.match(url, "optimizely%.com") or string.match(url, "amazonaws%.com")) then
       if string.match(url, "&amp;") then
         table.insert(urls, { url=string.gsub(url, "&amp;", "&") })
         addedtolist[url] = true
@@ -61,12 +62,29 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
 
   local function checknewurl(newurl, url)
     if string.match(newurl, "^https?://") then
-      check(newurl)
+      check(newurl, url)
     elseif string.match(newurl, "^//") then
-      check("http:"..newurl)
+      check("http:"..newurl, url)
     elseif string.match(newurl, "^/") then
-      check(string.match(url, "^(https?://[^/]+)")..newurl)
+      check(string.match(url, "^(https?://[^/]+)")..newurl, url)
     end
+  end
+
+  if googleurls[url] == true then
+    os.execute("sleep "..math.random(50, 80))
+  end
+
+  if url == "https://www.skillfeed.com/courses/"..item_value then
+    html = read_file(file)
+    googleurls["http://webcache.googleusercontent.com/search?q=cache:"..string.match(html, '"og:url"%s+content="([^"]+)"')] = true
+    check("http://webcache.googleusercontent.com/search?q=cache:"..string.match(html, '"og:url"%s+content="([^"]+)"'), url)
+--    Doesn't work in Google Cache unfortunately.
+--    for newurl in string.gmatch(html, '"(/[^"]+)"') do
+--      if string.match(newurl, "%?video_id=") then
+--        googleurls["http://webcache.googleusercontent.com/search?q=cache:"..string.match(url, "^(https?://[^/]+)")..newurl] = true
+--        check("http://webcache.googleusercontent.com/search?q=cache:"..string.match(url, "^(https?://[^/]+)")..newurl, url)
+--      end
+--    end
   end
   
   if (string.match(url, "/courses/"..item_value) and not string.match(url, "/courses/"..item_value.."[0-9]")) or string.match(url, "^https?://fast%.wistia%.com/") then
@@ -78,18 +96,18 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
       checknewurl(newurl, url)
     end
     if string.match(html, "Wistia%.embed%(") then
-      check("https://fast.wistia.com/embed/medias/"..string.match(html, 'Wistia%.embed%("([^"]+)",')..".json?callback=wistiajson1")
-      check("https://fast.wistia.com/embed/medias/"..string.match(html, 'Wistia%.embed%("([^"]+)",')..".json")
-      check("https://fast.wistia.com/embed/iframe/"..string.match(html, 'Wistia%.embed%("([^"]+)",'))
+      check("https://fast.wistia.com/embed/medias/"..string.match(html, 'Wistia%.embed%("([^"]+)",')..".json?callback=wistiajson1", url)
+      check("https://fast.wistia.com/embed/medias/"..string.match(html, 'Wistia%.embed%("([^"]+)",')..".json", url)
+      check("https://fast.wistia.com/embed/iframe/"..string.match(html, 'Wistia%.embed%("([^"]+)",'), url)
     end
     for datapart in string.gmatch(html, "{([^{]-)}") do
       if string.match(datapart, '"ext":"([^"]+)"') == "mp4" and not (string.match(datapart, '"slug":"([^"]+)"') == "original" or string.match(datapart, '"type":"([^"]+)"') == "preview" or string.match(datapart, '"type":"([^"]+)"') == "original") then
-        check(string.match(datapart, '"url":"(https?://.-)%.bin"').."/file.mp4")
+        check(string.match(datapart, '"url":"(https?://.-)%.bin"').."/file.mp4", url)
       elseif string.match(datapart, '"ext":"([^"]+)"') == "jpg" then
         check(string.match(datapart, '"url":"(https?://.-)%.bin"')..".jpg")
-        check(string.match(datapart, '"url":"(https?://.-)%.bin"')..".jpg?image_crop_resized=640x360")
-        check(string.match(datapart, '"url":"(https?://.-)%.bin"')..".jpg?image_crop_resized=960x540")
-        check(string.match(datapart, '"url":"(https?://.-)%.bin"')..".jpg?image_crop_resized=1280x720")
+        check(string.match(datapart, '"url":"(https?://.-)%.bin"')..".jpg?image_crop_resized=640x360", url)
+        check(string.match(datapart, '"url":"(https?://.-)%.bin"')..".jpg?image_crop_resized=960x540", url)
+        check(string.match(datapart, '"url":"(https?://.-)%.bin"')..".jpg?image_crop_resized=1280x720", url)
       end
     end
   end
@@ -116,30 +134,52 @@ wget.callbacks.httploop_result = function(url, err, http_stat)
     end
   end
 
-  local function errorcode(sleep, numtries, action)
-    io.stdout:write("\nServer returned "..http_stat.statcode..". Sleeping.\n")
-    io.stdout:flush()
-    os.execute("sleep "..tostring(sleep))
-    tries = tries + 1
-    if tries >= numtries then
-      io.stdout:write("\nI give up...\n")
-      io.stdout:flush()
-      tries = 0
-      if action == "abort" then
-        return wget.actions.ABORT
-      elseif action == "exit" then
-        return wget.actions.EXIT
-      end
-    else
-      return wget.actions.CONTINUE
-    end
-  end
+--  local function errorcode(sleep, numtries, action)
+--    io.stdout:write("\nServer returned "..http_stat.statcode..". Sleeping.\n")
+--    io.stdout:flush()
+--    os.execute("sleep "..sleep)
+--    tries = tries + 1
+--    if tries >= numtries then
+--     io.stdout:write("\nI give up...\n")
+--      io.stdout:flush()
+--      tries = 0
+--      if action == "abort" then
+--        return wget.actions.ABORT
+--      elseif action == "exit" then
+--        return wget.actions.EXIT
+--      end
+--    else
+--      return wget.actions.CONTINUE
+--    end
+--  end
   
   if status_code >= 500 or
     (status_code >= 400 and status_code ~= 404 and status_code ~= 403 and status_code ~= 400) then
-    errorcode(1, 5, "abort")
+    io.stdout:write("\nServer returned "..http_stat.statcode..". Sleeping.\n")
+    io.stdout:flush()
+    os.execute("sleep 1")
+    tries = tries + 1
+    if tries >= 5 then
+      io.stdout:write("\nI give up...\n")
+      io.stdout:flush()
+      tries = 0
+      return wget.actions.ABORT
+    else
+      return wget.actions.CONTINUE
+    end
   elseif status_code == 0 then
-    errorcode(10, 5, "abort")
+    io.stdout:write("\nServer returned "..http_stat.statcode..". Sleeping.\n")
+    io.stdout:flush()
+    os.execute("sleep 10")
+    tries = tries + 1
+    if tries >= 5 then
+      io.stdout:write("\nI give up...\n")
+      io.stdout:flush()
+      tries = 0
+      return wget.actions.ABORT
+    else
+      return wget.actions.CONTINUE
+    end
   end
 
   tries = 0

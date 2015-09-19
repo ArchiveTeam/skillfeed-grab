@@ -57,7 +57,7 @@ if not WGET_LUA:
 #
 # Update this each time you make a non-cosmetic change.
 # It will be added to the WARC files and reported to the tracker.
-VERSION = "20150914.02"
+VERSION = "20150919.01"
 USER_AGENT = 'ArchiveTeam'
 TRACKER_ID = 'skillfeed'
 TRACKER_HOST = 'tracker.archiveteam.org'
